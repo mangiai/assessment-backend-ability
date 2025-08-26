@@ -1,0 +1,157 @@
+{
+  "info": {
+    "_postman_id": "1e7c7c7e-4df9-4a61-8c74-33a8f6a4d57a",
+    "name": "Backend RP (Reverse Proxy) - Local (Env Token)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection for Reverse Proxy backend with token saved to ENVIRONMENT."
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{backendUrl}}/health"
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Seed Admin (DEV)",
+          "request": {
+            "method": "POST",
+            "url": "{{backendUrl}}/auth/seed-admin"
+          }
+        },
+        {
+          "name": "Login (saves token to ENV)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "try {",
+                  "  const json = pm.response.json();",
+                  "  if (json && json.token) {",
+                  "    pm.environment.set(\"token\", json.token);",
+                  "    console.log(\"Token saved to environment:\", json.token);",
+                  "  }",
+                  "} catch (e) { }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": "{{backendUrl}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Proxy",
+      "item": [
+        {
+          "name": "GET /proxy/users",
+          "request": {
+            "method": "GET",
+            "url": "{{backendUrl}}/proxy/users"
+          }
+        },
+        {
+          "name": "GET /proxy/posts",
+          "request": {
+            "method": "GET",
+            "url": "{{backendUrl}}/proxy/posts"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logs",
+      "item": [
+        {
+          "name": "List logs (page=1, limit=5)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{backendUrl}}/logs?page=1&limit=5"
+          }
+        },
+        {
+          "name": "List logs (filter by path & date)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{backendUrl}}/logs?path=/users&from=2025-08-01&to=2025-08-31&page=1&limit=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "Get settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{backendUrl}}/settings"
+          }
+        },
+        {
+          "name": "Update settings (disable logging)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loggingEnabled\": false\n}"
+            },
+            "url": "{{backendUrl}}/settings"
+          }
+        },
+        {
+          "name": "Update settings (whitelist /users only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loggingEnabled\": true,\n  \"whitelistPaths\": [\"/users\"]\n}"
+            },
+            "url": "{{backendUrl}}/settings"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "backendUrl", "value": "http://localhost:4000" },
+    { "key": "token", "value": "" }
+  ]
+}
